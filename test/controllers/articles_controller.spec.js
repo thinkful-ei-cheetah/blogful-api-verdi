@@ -87,5 +87,88 @@ describe('Articles Endpoints', function() {
         }); 
     });
   });
+
+  describe('PATCH /api/articles/:articleId', () => {
+    context('when article does not exist', () => {
+      it('returns a 404', () => {
+        return supertest(app)
+          .patch('/api/articles/1')
+          .set('Content-Type', 'application/json')
+          .send({title: 'An Updated Title!'})
+          .expect(404, {message: 'article not found'});
+      });
+    });
+
+    context('when article does exist', () => {
+      beforeEach('seed the table', () => db('blogful_articles').insert(testArticles));
+
+      it('returns a 204 and updates the article', () => {
+        const article = testArticles[0];
+        return supertest(app)
+          .patch(`/api/articles/${article.id}`)
+          .set('Content-Type', 'application/json')
+          .send({title: 'An Updated Title'})
+          .expect(204)
+          .then(() => {
+            return supertest(app)
+              .get(`/api/articles/${article.id}`)
+              .then(res => expect(res.body.title).to.equal('An Updated Title'));
+          });
+      });
+
+      it('returns 400 if no valid fields are provided', () => {
+        const article = testArticles[0];
+        return supertest(app)
+          .patch(`/api/articles/${article.id}`)
+          .set('Content-Type', 'application/json')
+          .send({fakeField: 'foo'})
+          .expect(400, {message: 'must include valid field of "title", "content", "style"'});
+      });
+
+      it('ignores non valid fields', () => {
+        const article = testArticles[0];
+        return supertest(app)
+          .patch(`/api/articles/${article.id}`)
+          .set('Content-Type', 'application/json')
+          .send({title: 'An Updated Title', fakeField: 'foo'})
+          .expect(204)
+          .then(() => {
+            return supertest(app)
+              .get(`/api/articles/${article.id}`)
+              .then(res => {
+                expect(res.body.title).to.equal('An Updated Title');
+                // eslint-disable-next-line no-unused-expressions
+                expect(res.body.fakeField).to.be.undefined;
+              });
+          });
+      });
+    });
+  });
+
+  describe('DELETE /api/articles/:articleId', () => {
+    context('when article does not exist', () => {
+      it('returns a 404', () => {
+        return supertest(app)
+          .delete('/api/articles/1')
+          .expect(404, {message: 'article not found'});
+      });
+    });
+
+    context('when article does exist', () => {
+      beforeEach('seed the table', () => db('blogful_articles').insert(testArticles));
+
+      it('deletes the article and returns 204', () => {
+        const article = testArticles[0];
+        return supertest(app)
+          .delete(`/api/articles/${article.id}`)
+          .expect(204)
+          .then(() => {
+            return supertest(app)
+              .get(`/api/articles/${article.id}`)
+              .expect(404, {message: 'article not found'});
+          });
+      });
+    });
+  });
 });
 

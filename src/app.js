@@ -32,7 +32,7 @@ app.use(cors({
   }
 }));
 
-app.use('/api/articles', articlesRouter);
+app.use('/api', articlesRouter);
 
 app.use(errorHandler);
 

@@ -1,10 +1,10 @@
 'use strict';
-
 const path = require('path');
 const express = require('express');
 const articlesRouter = express.Router();
 const bodyParser = express.json();
-const ArticlesService = require('./services/ArticlesService');
+
+const ArticlesService = require('./articles-service');
 
 const ensureArticle = async (req, res, next) => {
   const db = req.app.get('db');

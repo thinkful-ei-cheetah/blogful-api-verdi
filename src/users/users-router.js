@@ -57,7 +57,7 @@ usersRouter
   .route('/:user_id')
   .all(async (req, res, next) => {
     try {
-      const user = await UsersService.findByid(req.app.get('db'), req.params.user_id);
+      const user = await UsersService.findById(req.app.get('db'), req.params.user_id);
       if (!user) {
         return next({status: 404, message: 'User doesn\'t exist'});
       }

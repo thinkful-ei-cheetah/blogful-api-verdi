@@ -5,7 +5,7 @@ const UsersService = {
     return knex('blogful_users').select('*');
   },
 
-  findByid(knex, id) {
+  findById(knex, id) {
     return knex('blogful_users').where({id}).first('*');
   },
 

@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const articlesRouter = express.Router();
 const bodyParser = express.json();
+const xss = require('xss');
 
 const ArticlesService = require('./articles-service');
 
@@ -26,18 +27,21 @@ const ensureArticle = async (req, res, next) => {
 };
 
 const filterParams = (req, res, next) => {
-  const allowed = ['title', 'content', 'style'];
+  const allowed = ['title', 'content', 'style', 'date_published'];
   const filtered = {};
   for (const [key, value] of Object.entries(req.body)) {
     if (allowed.includes(key)) {
-      filtered[key] = value;
+      filtered[key] = xss(value);
     }
   }
-  req.body = filtered;
+
   // check if filtered obj is empty
   if (Object.entries(filtered).length === 0 && filtered.constructor === Object) {
     next({status: 400, message: 'must include valid field of "title", "content", "style"'});
   } else {
+    // author doesn't need to be validated
+    filtered.author = req.body.author;
+    req.body = filtered;
     next();
   }
   
@@ -54,8 +58,9 @@ articlesRouter
       next(err);
     }
   })
-  .post(bodyParser, async (req, res, next) => {
+  .post(bodyParser, filterParams, async (req, res, next) => {
     const db = req.app.get('db');
+    
     try {
       const article = await ArticlesService.insert(db, req.body);
       res

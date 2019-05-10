@@ -5,6 +5,7 @@ const { expect } = require('chai');
 const knex = require('knex');
 const app = require('../../src/app');
 const articleFixture = require('../fixtures/articles_fixture');
+const userFixture = require('../fixtures/users_fixtures');
 
 describe('Articles Endpoints', function() {
   let db;
@@ -16,16 +17,24 @@ describe('Articles Endpoints', function() {
     });
   });
 
+  const testUsers = userFixture.makeUsersArray();
   const testArticles = articleFixture.makeArticlesArray();
 
   after('disconnect from db', () => db.destroy());
-  before('clean the table', () => db('blogful_articles').truncate());
+
+  before('clean the table', () => db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE'));
+
   beforeEach('set the db instance', () => app.set('db', db));
-  afterEach('clear the table', () => db('blogful_articles').truncate());
+  
+  afterEach('cleanup',() => db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE'));
 
   describe('GET /api/articles', () => {
     context('when articles exist', () => {
-      beforeEach('seed the table', () => db('blogful_articles').insert(testArticles));
+      beforeEach('seed the table', () => {
+        return db('blogful_users')
+          .insert(testUsers)
+          .then(() => db('blogful_articles').insert(testArticles));
+      });
       
       it('returns all the articles', () => {
         return supertest(app)
@@ -44,7 +53,11 @@ describe('Articles Endpoints', function() {
   });
 
   describe('GET /api/articles/:article_id', () => {
-    beforeEach('seed the table', () => db('blogful_articles').insert(testArticles));  
+    beforeEach('seed the table', () => {
+      return db('blogful_users')
+        .insert(testUsers)
+        .then(() => db('blogful_articles').insert(testArticles));
+    });
 
     it('returns an article by id', () => {
       const article = testArticles[0];
@@ -73,7 +86,8 @@ describe('Articles Endpoints', function() {
         date_published: '1925-12-22T16:28:32.615Z',
         title: 'First test post!',
         style: 'Story',
-        content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.'
+        content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
+        author: null
       };
 
       return supertest(app)
@@ -100,7 +114,11 @@ describe('Articles Endpoints', function() {
     });
 
     context('when article does exist', () => {
-      beforeEach('seed the table', () => db('blogful_articles').insert(testArticles));
+      beforeEach('seed the table', () => {
+        return db('blogful_users')
+          .insert(testUsers)
+          .then(() => db('blogful_articles').insert(testArticles));
+      });
 
       it('returns a 204 and updates the article', () => {
         const article = testArticles[0];
@@ -155,7 +173,11 @@ describe('Articles Endpoints', function() {
     });
 
     context('when article does exist', () => {
-      beforeEach('seed the table', () => db('blogful_articles').insert(testArticles));
+      beforeEach('seed the table', () => {
+        return db('blogful_users')
+          .insert(testUsers)
+          .then(() => db('blogful_articles').insert(testArticles));
+      });
 
       it('deletes the article and returns 204', () => {
         const article = testArticles[0];

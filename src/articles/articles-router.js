@@ -44,7 +44,7 @@ const filterParams = (req, res, next) => {
 };
 
 articlesRouter
-  .route('/articles')
+  .route('/')
   .get(async (req, res, next) => {
     const db = req.app.get('db');
     try {
@@ -68,7 +68,7 @@ articlesRouter
   });
 
 articlesRouter
-  .route('/articles/:articleId')
+  .route('/:articleId')
   .all(ensureArticle)
   .get(async (req, res, next) => {
     const db = req.app.get('db');
